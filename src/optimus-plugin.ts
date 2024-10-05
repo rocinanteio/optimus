@@ -1,13 +1,45 @@
-import { getCdn } from './service';
 import { parse } from '@babel/parser';
 import traverse, { NodePath } from '@babel/traverse';
 import * as t from '@babel/types';
+import type { Plugin } from 'vite';
+import generate from '@babel/generator';
+import { IconManager } from './icon-manager';
 
-export const optimusPlugin = () => {
-  const iconSet = new Set();
+const iconSet = new Set<string>();
+const IconManagerInstance = new IconManager();
+
+export const optimusPlugin = (): Plugin => {
+  const getIconName = function (
+    attribute: t.JSXAttribute | t.JSXSpreadAttribute,
+  ) {
+    if (t.isJSXAttribute(attribute)) {
+      if (t.isStringLiteral(attribute.value)) {
+        return attribute.value.value;
+      }
+
+      if (
+        t.isJSXExpressionContainer(attribute.value) &&
+        t.isStringLiteral(attribute.value.expression)
+      ) {
+        return attribute.value.expression.value;
+      }
+    }
+  };
+
+  const getIconIdentifier = function (element: t.JSXOpeningElement) {
+    return element.attributes.find(
+      (attr) =>
+        t.isJSXAttribute(attr) &&
+        t.isJSXIdentifier(attr.name, { name: 'ty-icon' }) &&
+        (t.isStringLiteral(attr.value) ||
+          t.isJSXExpressionContainer(attr.value)),
+    );
+  };
+
   return {
     name: 'optimus-bundle',
-    transform(code: string, id: string) {
+    enforce: 'pre',
+    async transform(code: string, id: string) {
       if (!id.endsWith('.jsx') && !id.endsWith('.tsx')) {
         return null;
       }
@@ -17,59 +49,55 @@ export const optimusPlugin = () => {
         plugins: ['jsx', 'typescript'],
       });
 
-      if (
-        id ===
-        '/Users/ibrahim.dagdelen/Projects/Github/icon-usage-benchmark/svg-converter-demo/src/App.tsx'
-      ) {
-        console.log('ast');
-      }
+      // Find Available Icons
       // @ts-ignore
       traverse.default(ast, {
-        JSXElement(path) {
-          console.log('asdfasd');
+        JSXElement(path: NodePath<t.JSXElement>) {
           const openingElement = path.node.openingElement;
-
-          if (t.isJSXIdentifier(openingElement.name, { name: 'ty-icon' })) {
-            console.log('sadfads');
-          }
-        },
-        CallExpression(path: NodePath<t.CallExpression>, opts: t.Node) {
-          const callee = path.node.callee;
-
-          callee.naöme = 'jsx';
-
-          if (t.isJSXElement(callee)) {
-            // Eğer JSX öğesi ise, children eklemek için
-            const jsxElement = callee;
-
-            // Yeni children'ı oluştur
-            const newChild = t.jsxElement('<svg></svg>'); // veya istediğin bir JSX öğesi
-
-            // Eğer children yoksa bir dizi oluştur
-            if (!jsxElement.openingElement.attributes) {
-              jsxElement.children = [];
+          if (t.isJSXIdentifier(openingElement.name, { name: 'i' })) {
+            const element = getIconIdentifier(openingElement);
+            if (!element) return;
+            const name = getIconName(element);
+            if (name) {
+              iconSet.add(name);
             }
-
-            // Yeni child'ı children dizisine ekle
-            jsxElement.children.push(newChild);
-
-            console.log('Yeni child eklendi:', newChild);
           }
         },
       });
 
+      // Fetch Icons
+      const list = Array.from(iconSet.values());
+      await IconManagerInstance.addIcons(list);
+
+      // @ts-ignore
+      traverse.default(ast, {
+        JSXElement(path: NodePath<t.JSXElement>) {
+          const openingElement = path.node.openingElement;
+          if (t.isJSXIdentifier(openingElement.name, { name: 'i' })) {
+            const element = getIconIdentifier(openingElement);
+            if (!element) return;
+
+            let iconName = getIconName(element);
+            if (iconName) {
+              const icon = IconManagerInstance.getIcon(iconName);
+              if (!icon) return;
+
+              const newChild = t.jsxText(icon);
+
+              if (!path.node.children) {
+                path.node.children = [];
+              }
+
+              path.node.children.push(newChild);
+            }
+          }
+        },
+      });
+
+      const output = generate.default(ast, {});
       return {
-        code: code,
+        code: output.code,
       };
-    },
-    async buildEnd() {
-      const icons = Array.from(iconSet) as string[];
-
-      for (const icon of icons) {
-        await getCdn(icon);
-      }
-
-      console.log('\nOptimus Icons:', Array.from(iconSet));
     },
   };
 };
