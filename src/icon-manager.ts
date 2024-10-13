@@ -3,10 +3,6 @@ import { getCdn } from './service';
 export class IconManager {
   icons: { [key: string]: string } = {};
 
-  getIcons() {
-    return this.icons;
-  }
-
   getIcon(name: string) {
     if (!this.icons[name]) {
       console.log(`optimus plugin could not found this icon: ${name}`);

@@ -1,30 +1,48 @@
 import commonjs from '@rollup/plugin-commonjs';
-import babel from 'rollup-plugin-babel';
 import typescript from 'rollup-plugin-typescript2';
 import json from '@rollup/plugin-json';
 
-export default {
-  input: 'src/index.ts', // Pluginin ana dosyası
-  output: [
-    {
-      file: 'dist/index.cjs.js',
-      format: 'cjs', // CommonJS formatı
-      exports: 'named',
-    },
-    {
-      file: 'dist/index.js',
-      format: 'esm', // ES Module formatı
-    },
-  ],
-  plugins: [
-    json(),
-    commonjs(), // CommonJS modüllerini dönüştürmek için
-    typescript({
-      tsconfig: './tsconfig.json', // TypeScript yapılandırma dosyasının yolu
-    }),
-    babel({
-      exclude: 'node_modules/**',
-      presets: ['@babel/preset-env', '@babel/preset-react'], // Eğer JSX kullanıyorsan
-    }),
-  ],
-};
+export default [
+  {
+    input: 'src/optimus-vite-plugin.ts',
+    output: [
+      {
+        file: 'dist/optimus-vite-plugin.cjs',
+        format: 'cjs',
+        exports: 'named',
+      },
+      {
+        file: 'dist/optimus-vite-plugin.js',
+        format: 'esm',
+      },
+    ],
+    plugins: [
+      json(),
+      commonjs(),
+      typescript({
+        tsconfig: './tsconfig.json',
+      }),
+    ],
+  },
+  {
+    input: 'src/optimus-webpack-loader.ts',
+    output: [
+      {
+        file: 'dist/optimus-webpack-loader.cjs',
+        format: 'cjs',
+        exports: 'named',
+      },
+      {
+        file: 'dist/optimus-webpack-loader.js',
+        format: 'esm',
+      },
+    ],
+    plugins: [
+      json(),
+      commonjs(),
+      typescript({
+        tsconfig: './tsconfig.json',
+      }),
+    ],
+  },
+];
