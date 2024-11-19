@@ -9,6 +9,14 @@ export const getIconIdentifier = function (element: t.JSXOpeningElement) {
   );
 };
 
+export const getStyleIdentifier = function (element: t.JSXOpeningElement) {
+  return element.attributes.find(
+    (attr) =>
+      t.isJSXAttribute(attr) &&
+      t.isJSXIdentifier(attr.name, { name: 'style' })
+  );
+};
+
 export const getIconName = function (
   attribute: t.JSXAttribute | t.JSXSpreadAttribute,
 ) {

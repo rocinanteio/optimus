@@ -1,2 +1,7 @@
 src
-
+.idea
+.babelrc
+tsconfig.build.json
+tsconfig.json
+yarn.lock
+nodemon.json

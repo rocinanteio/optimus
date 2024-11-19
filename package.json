@@ -1,6 +1,6 @@
 {
-  "name": "optimus",
-  "version": "1.0.0",
+  "name": "@rocinantejs/optimus",
+  "version": "1.0.1",
   "description": "",
   "type": "module",
   "exports": {
